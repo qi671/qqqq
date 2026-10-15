@@ -1,27 +1,91 @@
 # CO₂RR Lab Dashboard
 
-An experimental data visualization web app for Cu–ZrO₂ acidic CO₂ electroreduction research.
+中文响应式 Cu–ZrO₂ 酸性 CO₂ 电还原实验数据工作台。使用 Next.js App Router、TypeScript、Tailwind CSS、Recharts，构建结果为静态站点。
 
-## MVP scope
+## 本地运行
 
-- Next.js App Router, TypeScript, Tailwind CSS, Recharts
-- Local-only CSV/XLSX import and column mapping
-- Catalyst sample comparison by Cu/Zr loading, calcination temperature, grinding time, and electrode loading
-- FE and partial-current calculations with explicit current-density input
-- Interactive plots and CSV export
-- No database, login, or server-side upload of experimental files
+需要 Node.js 20.9+（本项目使用 Node.js 24 验证）。
 
-## Data policy
+```sh
+npm ci
+npm run dev
+```
 
-This repository is public. **Do not commit unpublished experimental datasets, credentials, or sensitive lab records.** Use clearly labeled demonstration data only.
+打开 `http://127.0.0.1:3000`。
 
-## Example observations (illustrative, not a full dataset)
+```sh
+npm run lint
+npm run typecheck
+npm test
+npm run build
+npm start
+```
 
-- Cu 0.45 mmol / Zr 3 mmol: CH4 FE ≈ 50%, H2 FE ≈ 30%
-- Cu 0.60 mmol / Zr 3 mmol: CH4 FE ≈ 50%, H2 FE ≈ 20%
+`npm run build` 将静态页面导出到 `out/`；`npm start` 在本机预览该目录。开发及构建显式使用 Webpack，避免本项目 Windows 环境下 Turbopack 的 CSS 子进程启动问题。
 
-Total current density and other missing measurements are not supplied and must not be invented.
+## 工作流
 
-## Next step
+1. 下载页面中的 CSV 示例模板，或选择/拖放自己的 `.csv`、`.xlsx` 文件。
+2. 在导入窗口选择工作表，确认列映射、FE 单位及校验明细。必选样品编号与至少一列产物 FE；其他列可以不映射。同一源列不可重复映射。
+3. 确认导入后替换当前工作台。按 Cu/Zr 投料量、焙烧温度、研磨时间和催化剂载量组合筛选；支持筛选缺失条件与搜索编号。
+4. 查看产物 FE 柱状图，在表格勾选最多 6 个样品比较。概览图最多显示当前筛选的前 12 个样品，表格每页显示 10 条。
+5. 选择样品，输入该样品的**实测总电流密度**并点击“计算”。每个样品独立记录，留空并计算可清除。
+6. 导出当前筛选下全部样品的清洗 CSV（不限于当前页），包含单位明确的字段及各产物分电流。
 
-Use Codex to implement the MVP in a feature branch and open a pull request.
+## 字段、缺失值与计算规则
+
+| CSV 标题                                                       | 含义                               | 单位   |
+| -------------------------------------------------------------- | ---------------------------------- | ------ |
+| `sample_id`                                                    | 唯一样品编号，重复实验请用独立编号 | 文本   |
+| `cu_mmol` / `zr_mmol`                                          | Cu / Zr 投料量                     | mmol   |
+| `calcination_c`                                                | 焙烧温度                           | °C     |
+| `grinding_min`                                                 | 研磨时间                           | min    |
+| `loading_mg_cm2`                                               | 催化剂载量                         | mg/cm² |
+| `fe_ch4_pct` / `fe_h2_pct` / `fe_co_pct` / `fe_c2_pct`         | 产物 FE                            | %      |
+| `j_total_ma_cm2`                                               | 实测总电流密度                     | mA/cm² |
+| `j_ch4_ma_cm2` / `j_h2_ma_cm2` / `j_co_ma_cm2` / `j_c2_ma_cm2` | 导出时计算的分电流                 | mA/cm² |
+
+- 默认 `50` 表示 50%，不自动猜测小数单位。选择“小数”后，无百分号的 `0.5` 转为 50%；带 `%` / `％` 的数始终按百分数读取。
+- 空白、`NA`、`N/A`、`null`、`NaN`、`none`、`未测`、`缺失`、`—`、`-`、`--`、`ND` 作为缺失值处理；真实的 `0` 始终保留。
+- 页面缺失值显示“未测”，图表不绘制该柱形，CSV 保持空字段；不会以 0、均值或推测值填补。
+- 样品编号为空或重复、非法数字、非有限数值、单个 FE 不在 0–100%、非电流字段为负数，以及 Zr 为 0 的行排除，并显示源数据行号。CSV 中超出标题列数的非空数据也会报错。
+- 缺失值及已知 FE 小计超过 100% 仅提示，原值保留、不归一化。已知 FE 小计仅是已提供产物之和，**不能代表完整总 FE 或电子闭合**。
+- `C₂` 是用户提供的汇总 FE，不推测其具体组分，也不推算其余未知产物。
+- 分电流采用 `j_product = j_total × FE / 100`，单位 mA/cm²。保留总电流的正负号；如实验使用阴极电流绝对值，请输入正值。任一输入缺失时结果为空。
+- 无法求值的 Excel 公式单元格保持缺失；不运行公式或宏。导出对可能触发电子表格公式的文本编号加前缀保护。
+
+## 示例数据约束
+
+应用与 `public/co2rr-template.csv` 只包含以下两条已提供的示例观测：
+
+| Cu / Zr 投料量     | CH₄ FE | H₂ FE |
+| ------------------ | ------ | ----- |
+| 0.45 mmol / 3 mmol | 50%    | 30%   |
+| 0.60 mmol / 3 mmol | 50%    | 20%   |
+
+CO、C₂、焙烧温度、研磨时间、催化剂载量与总电流密度均为空。没有补造数据。测试代码中的合成输入仅用于验证边界，不进入界面或示例模板。
+
+## 隐私与支持范围
+
+- 文件通过浏览器 File API、Papa Parse、SheetJS 解析，不发送实验文件或记录，不使用数据库、登录、分析服务、远程字体或第三方请求。
+- 数据仅在当前页面内存中保存，刷新即恢复示例。“恢复示例”也会替换当前工作台。
+- CSV 支持 UTF-8（含 BOM）及 GB18030 回退解码，自动识别常用分隔符；首行须为标题。
+- XLSX 支持选择非空工作表。每次只导入所选工作表，不合并不同工作表。不支持加密工作簿或旧版 `.xls`。
+- 文件上限 10 MB；每表最多 10,000 条数据、100 列。导入采用预览确认，格式错误不会覆盖当前数据。
+- 此仓库公开：不要提交未公开实验数据、凭证或敏感记录。`data/`、`uploads/` 目录已忽略。
+
+## 自动化测试
+
+`npm test` 覆盖示例数据约束、缺失与真实零值、百分数转换、FE 越界、重复编号、组合筛选、分电流公式、CSV 公式保护与往返、XLSX 多工作表及文件限制。
+
+```sh
+npm run build
+# Windows 默认使用已安装的 Microsoft Edge。
+# 其他系统先安装 Playwright Chromium：
+npx playwright install --with-deps chromium
+npm run test:e2e
+```
+
+Playwright 使用生产静态输出，验证桌面与手机布局、列映射、CSV/XLSX 本地导入、筛选、缺失值显示、分电流与 CSV 下载；并检查运行时没有第三方请求。没有后端上传接口。
+
+解析库参考：[SheetJS 安装文档](https://docs.sheetjs.com/docs/getting-started/installation/nodejs/)；框架参考：[Next.js 安装文档](https://nextjs.org/docs/app/getting-started/installation)。

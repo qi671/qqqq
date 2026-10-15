@@ -1,0 +1,3 @@
+sample_id,cu_mmol,zr_mmol,calcination_c,grinding_min,loading_mg_cm2,fe_ch4_pct,fe_h2_pct,fe_co_pct,fe_c2_pct,j_total_ma_cm2
+Cu-0.45 / Zr-3,0.45,3,,,,50,30,,,
+Cu-0.60 / Zr-3,0.60,3,,,,50,20,,,

@@ -1,0 +1,39 @@
+{
+  "name": "co2rr-lab-dashboard",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev --webpack --hostname 127.0.0.1",
+    "build": "next build --webpack",
+    "start": "serve out --listen tcp://127.0.0.1:3000 --no-clipboard",
+    "lint": "eslint . --max-warnings 0",
+    "typecheck": "next typegen && tsc --noEmit",
+    "test": "vitest run",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "lucide-react": "latest",
+    "next": "16.4.1",
+    "papaparse": "^5.5.3",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "recharts": "3.10.1",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56",
+    "@tailwindcss/postcss": "4.3.3",
+    "@types/node": "^24",
+    "@types/papaparse": "^5",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.4.1",
+    "prettier": "^3.9.10",
+    "serve": "^14.2.4",
+    "tailwindcss": "4.3.3",
+    "typescript": "^5.9",
+    "vitest": "^4"
+  }
+}
